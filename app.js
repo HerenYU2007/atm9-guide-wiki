@@ -935,18 +935,22 @@ function liveUrlWithBust(url) {
 }
 
 function renderLiveStatus(data) {
-  const online = data.online !== false;
-  const players = Array.isArray(data.players) ? data.players : [];
-  const playerCount = Number.isFinite(Number(data.playerCount)) ? Number(data.playerCount) : players.length;
-  const maxPlayers = data.maxPlayers ?? data.max ?? "?";
-  const tps = data.tps || data.tps1m || data.mspt || "";
+  const server = data.server || {};
+  const rawPlayers = Array.isArray(data.players) ? data.players : Array.isArray(data.online_players) ? data.online_players : [];
+  const players = rawPlayers.map((player) => typeof player === "string" ? player : player.name).filter(Boolean);
+  const online = data.online ?? !String(server.status || "").toLowerCase().includes("stop");
+  const playerCount = Number.isFinite(Number(data.playerCount)) ? Number(data.playerCount) : Number.isFinite(Number(server.online_count)) ? Number(server.online_count) : players.length;
+  const maxPlayers = data.maxPlayers ?? data.max ?? server.max_players ?? "?";
+  const tps = data.tps || data.tps1m || server.tps || server.mspt || "";
+  const updatedAt = data.updatedAt || data.generated_at_iso || "";
   $("#liveStatusBadge").textContent = online ? "在线" : "离线";
   $("#livePlayerCount").textContent = `${playerCount}/${maxPlayers}`;
   $("#livePlayers").textContent = players.length ? players.join("、") : "当前没有玩家在线";
   $("#liveServerMeta").textContent = [
     tps ? `TPS/MSPT：${tps}` : "",
     data.dimension ? `维度：${data.dimension}` : "",
-    data.updatedAt ? `更新时间：${data.updatedAt}` : "",
+    data.progress?.all_players_summary || "",
+    updatedAt ? `更新时间：${updatedAt}` : "",
   ].filter(Boolean).join(" · ") || "已连接实时数据";
 }
 

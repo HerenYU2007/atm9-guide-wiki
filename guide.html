@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ATM9 攻略 - Applied The Mekanisms</title>
+    <link rel="stylesheet" href="styles.css?v=20260701-multipage-1" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Applied The Mekanisms" />
+        <div>
+          <h1>Applied The Mekanisms</h1>
+          <p>ATM9 本地攻略与物品 Wiki</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="主导航">
+        <a class="tab" data-view="overview" href="index.html">总览</a>
+        <a class="tab active" data-view="guide" href="guide.html">攻略</a>
+        <a class="tab" data-view="wiki" href="wiki.html">物品 Wiki</a>
+        <a class="tab" data-view="advancements" href="advancements.html">成就</a>
+        <a class="tab" data-view="quests" href="quests.html">任务</a>
+        <a class="tab" data-view="mods" href="mods.html">模组</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="status-band">
+        <div class="status-copy">
+          <span class="eyebrow">ATM9</span>
+          <h2>ATM9整合包攻略&WIKI</h2>
+          <p id="sourceLine">ATM9整合包攻略&WIKI</p>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </section>
+
+      <section class="view" id="view-overview"></section>
+      <section class="view active" id="view-guide"></section>
+      <section class="view" id="view-wiki"></section>
+      <section class="view" id="view-advancements"></section>
+      <section class="view" id="view-quests"></section>
+      <section class="view" id="view-mods"></section>
+    </main>
+
+    <div class="modal-backdrop" id="advancementModal" hidden>
+      <article class="modal-card">
+        <button class="modal-close" id="advancementClose" aria-label="关闭">×</button>
+        <div id="advancementModalBody"></div>
+      </article>
+    </div>
+
+    <template id="row-template">
+      <article class="result-row">
+        <div class="type-pill"></div>
+        <div class="result-main">
+          <strong></strong>
+          <code></code>
+        </div>
+        <span class="result-mod"></span>
+      </article>
+    </template>
+
+    <script>
+      window.ATM9_CONFIG = {
+        assetBaseUrl: "",
+        initialView: "guide"
+      };
+    </script>
+    <script src="app.js?v=20260701-multipage-1"></script>
+  </body>
+</html>

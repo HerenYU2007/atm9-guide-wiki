@@ -37,9 +37,12 @@ const typeLabels = {
   enchantment: "附魔",
 };
 
-const assetVersion = "20260701-multipage-1";
+const assetVersion = "20260702-live-cos-5s-1";
 const atm9Config = bootConfig;
 const assetBaseUrl = String(atm9Config.assetBaseUrl || "").replace(/\/+$/, "");
+const liveStatusUrl = String(atm9Config.liveStatusUrl || "");
+const liveRefreshMs = Number(atm9Config.liveRefreshMs || 5000);
+let liveStatusTimer = null;
 
 const guideStages = [
   {
@@ -860,6 +863,7 @@ function renderOverview() {
         </div>
       </aside>
       <div class="content-stack">
+        ${renderLiveStatusPanel()}
         <section class="content-panel">
           <div class="section-head">
             <h2>推荐游玩主线</h2>
@@ -896,6 +900,73 @@ function renderOverview() {
     </div>
   `;
   bindJumpButtons($("#view-overview"));
+  startLiveStatus();
+}
+
+function renderLiveStatusPanel() {
+  if (!liveStatusUrl) return "";
+  return `
+    <section class="content-panel" id="liveStatusPanel">
+      <div class="section-head">
+        <h2>服务器实时状态</h2>
+        <span class="badge purple" id="liveStatusBadge">读取中</span>
+      </div>
+      <div class="grid-cards">
+        <article class="info-card">
+          <h3>在线人数</h3>
+          <p id="livePlayerCount">正在读取 COS 数据...</p>
+        </article>
+        <article class="info-card">
+          <h3>在线玩家</h3>
+          <p id="livePlayers">暂无数据</p>
+        </article>
+        <article class="info-card">
+          <h3>服务器状态</h3>
+          <p id="liveServerMeta">等待首次刷新</p>
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function liveUrlWithBust(url) {
+  const joiner = url.includes("?") ? "&" : "?";
+  return `${url}${joiner}t=${Date.now()}`;
+}
+
+function renderLiveStatus(data) {
+  const online = data.online !== false;
+  const players = Array.isArray(data.players) ? data.players : [];
+  const playerCount = Number.isFinite(Number(data.playerCount)) ? Number(data.playerCount) : players.length;
+  const maxPlayers = data.maxPlayers ?? data.max ?? "?";
+  const tps = data.tps || data.tps1m || data.mspt || "";
+  $("#liveStatusBadge").textContent = online ? "在线" : "离线";
+  $("#livePlayerCount").textContent = `${playerCount}/${maxPlayers}`;
+  $("#livePlayers").textContent = players.length ? players.join("、") : "当前没有玩家在线";
+  $("#liveServerMeta").textContent = [
+    tps ? `TPS/MSPT：${tps}` : "",
+    data.dimension ? `维度：${data.dimension}` : "",
+    data.updatedAt ? `更新时间：${data.updatedAt}` : "",
+  ].filter(Boolean).join(" · ") || "已连接实时数据";
+}
+
+async function refreshLiveStatus() {
+  if (!liveStatusUrl || !$("#liveStatusPanel")) return;
+  try {
+    const response = await fetch(liveUrlWithBust(liveStatusUrl), { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    renderLiveStatus(text ? JSON.parse(text) : {});
+  } catch (error) {
+    $("#liveStatusBadge").textContent = "连接失败";
+    $("#liveServerMeta").textContent = `无法读取实时数据：${error.message}`;
+  }
+}
+
+function startLiveStatus() {
+  if (!liveStatusUrl || liveStatusTimer) return;
+  refreshLiveStatus();
+  liveStatusTimer = window.setInterval(refreshLiveStatus, Math.max(3000, liveRefreshMs));
 }
 
 function renderGuide() {

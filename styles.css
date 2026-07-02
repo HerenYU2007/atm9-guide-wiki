@@ -823,6 +823,49 @@ code {
   gap: 6px;
 }
 
+.live-player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.live-player-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.live-player-card h3,
+.live-player-card p {
+  margin: 0;
+}
+
+.live-player-card p {
+  color: var(--muted);
+}
+
+.live-player-card code {
+  width: fit-content;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #eef3f8;
+}
+
+.live-click-card {
+  cursor: pointer;
+}
+
+.live-click-card:hover,
+.live-click-card:focus-visible {
+  border-color: var(--coal);
+  box-shadow: 0 8px 22px rgba(34, 42, 52, 0.12);
+  outline: none;
+}
+
 .compact-head {
   margin-top: 6px;
 }

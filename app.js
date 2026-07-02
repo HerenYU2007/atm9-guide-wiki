@@ -25,6 +25,7 @@ const state = {
     namespace: "all",
   },
   renderedViews: new Set(),
+  livePlayers: [],
 };
 
 const typeLabels = {
@@ -37,7 +38,7 @@ const typeLabels = {
   enchantment: "附魔",
 };
 
-const assetVersion = "20260702-live-cos-5s-1";
+const assetVersion = "20260702-live-player-modal-1";
 const atm9Config = bootConfig;
 const assetBaseUrl = String(atm9Config.assetBaseUrl || "").replace(/\/+$/, "");
 const liveStatusUrl = String(atm9Config.liveStatusUrl || "");
@@ -916,7 +917,7 @@ function renderLiveStatusPanel() {
           <h3>在线人数</h3>
           <p id="livePlayerCount">正在读取 COS 数据...</p>
         </article>
-        <article class="info-card">
+        <article class="info-card live-click-card" id="livePlayersCard" role="button" tabindex="0" title="点击查看玩家详情">
           <h3>在线玩家</h3>
           <p id="livePlayers">暂无数据</p>
         </article>
@@ -941,17 +942,71 @@ function renderLiveStatus(data) {
   const online = data.online ?? !String(server.status || "").toLowerCase().includes("stop");
   const playerCount = Number.isFinite(Number(data.playerCount)) ? Number(data.playerCount) : Number.isFinite(Number(server.online_count)) ? Number(server.online_count) : players.length;
   const maxPlayers = data.maxPlayers ?? data.max ?? server.max_players ?? "?";
-  const tps = data.tps || data.tps1m || server.tps || server.mspt || "";
+  const tps = data.tps || data.tps1m || server.tps || "";
+  const mspt = data.mspt || server.mspt || "";
   const updatedAt = data.updatedAt || data.generated_at_iso || "";
+  state.livePlayers = rawPlayers;
   $("#liveStatusBadge").textContent = online ? "在线" : "离线";
   $("#livePlayerCount").textContent = `${playerCount}/${maxPlayers}`;
   $("#livePlayers").textContent = players.length ? players.join("、") : "当前没有玩家在线";
   $("#liveServerMeta").textContent = [
-    tps ? `TPS/MSPT：${tps}` : "",
+    server.status ? `状态：${server.status}` : "",
+    tps ? `TPS：${tps}` : "",
+    mspt ? `MSPT：${mspt}` : "",
     data.dimension ? `维度：${data.dimension}` : "",
     data.progress?.all_players_summary || "",
     updatedAt ? `更新时间：${updatedAt}` : "",
   ].filter(Boolean).join(" · ") || "已连接实时数据";
+  bindLivePlayersCard();
+}
+
+function bindLivePlayersCard() {
+  const card = $("#livePlayersCard");
+  if (!card || card.dataset.bound === "true") return;
+  card.dataset.bound = "true";
+  card.addEventListener("click", openLivePlayersModal);
+  card.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openLivePlayersModal();
+    }
+  });
+}
+
+function openLivePlayersModal() {
+  $("#advancementModalBody").innerHTML = `
+    <div class="section-head compact-head">
+      <h2>在线玩家详情</h2>
+      <span class="badge">${number(state.livePlayers.length)} 人</span>
+    </div>
+    <div class="live-player-list">
+      ${state.livePlayers.length ? state.livePlayers.map(renderLivePlayerCard).join("") : `<div class="notice">当前没有在线玩家。</div>`}
+    </div>
+  `;
+  $("#advancementModal").hidden = false;
+}
+
+function renderLivePlayerCard(player) {
+  if (typeof player === "string") {
+    return `<article class="live-player-card"><h3>${escapeHtml(player)}</h3><p>没有更多玩家详情。</p></article>`;
+  }
+  const pos = Array.isArray(player.pos) ? player.pos : [];
+  const coords = pos.length >= 3
+    ? `X ${formatCoord(pos[0])} · Y ${formatCoord(pos[1])} · Z ${formatCoord(pos[2])}`
+    : "坐标暂无";
+  return `
+    <article class="live-player-card">
+      <h3>${escapeHtml(player.name || "未知玩家")}</h3>
+      <p>${escapeHtml(player.dimension || "未知维度")}</p>
+      <code>${escapeHtml(coords)}</code>
+      <span class="badge">等级 ${escapeHtml(player.xp_level ?? "?")}</span>
+    </article>
+  `;
+}
+
+function formatCoord(value) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue.toFixed(1) : String(value ?? "?");
 }
 
 async function refreshLiveStatus() {
